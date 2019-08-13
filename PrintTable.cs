@@ -48,5 +48,11 @@ namespace nyoka_Client
                 }
             }
         }
+    
+    public static string doFormat(string input)
+        {
+            return ' ' + input + ' ';
+        }
+    
     }
 }

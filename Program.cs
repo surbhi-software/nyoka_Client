@@ -12,15 +12,36 @@ namespace nyoka_Client
 {
     class Program
     {
+        //private static Constants.ResourceType? listType;   
         static int Main(string[] args)
         {
-            return CommandLine.Parser.Default.ParseArguments<InitOptions, AddOptions, RemoveOptions,
-            ListOptions>(args.ToList())
+            Parser parser = new Parser(settings =>
+            {
+                settings.CaseSensitive = false;
+                settings.IgnoreUnknownArguments = false;
+            });
+            PrintTable table = new PrintTable {
+                    {Constants.HeaderStringType, 6},
+                    {Constants.HeaderStringNameOfResource, 21},
+                    {Constants.HeaderStringVersion, 16},
+                    {Constants.HeaderStringFileSize, 11},
+                };
+            if (args.ToList().Count == 0)
+            {
+                Logger.logError($"{Constants.APPLICATION_ALIAS} must be called with an action name. Available actions:");
+                GetOptions.GetAllOptions();
+                return 0;
+            }
+
+            return CommandLine.Parser.Default.ParseArguments<InitOptions, ListOptions, AvailableOptions,
+             DependencyOption, PublishOptions>(args.ToList())
               .MapResult(
-                (InitOptions opts) => InitOptions.tryCreateDirIfNonExistent(),
-                (AddOptions opts) => AddOptions.AddPackage(opts),
-                (RemoveOptions opts) => RemoveOptions.RemovePackage(opts),
-                //(ListOptions opts) => ListOptions.listResources(),
+                (InitOptions opts) => InitOptions.initDirectories(),
+                (ListOptions opts) => ListOptions.ListResources(opts.resourceType, args.ToList()),
+                (AvailableOptions opts) => AvailableOptions.Available(),
+                 (DependencyOption opts) => DependencyOption.ListAllDependencies(),
+                (PublishOptions opts) => PublishOptions.Publish(opts.prefix, opts.resourceDescription,
+                opts.deps),
                 errs => 1);
         }
     }
