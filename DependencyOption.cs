@@ -8,42 +8,55 @@ using CommandLine.Text;
 using static nyoka_Client.Constants;
 
 namespace nyoka_Client
-{[Verb("dependencies", HelpText = "List dependencies of resource.")]
-   
-    public class DependencyOption
+{
+    [Verb("dependencies", HelpText = "List dependencies of resource.")]
+
+    public class DependencyOption : IOptions
     {
         public static ResourceIdentifier resourceIdentifier;
         public static string prefix;
-         public DependencyOption(List<string> actionArgs, out bool successful)
+        [Option("resource", HelpText = "(Lists dependencies of a code resource named programName.py. If the resource is present locally, this will list the dependencies of the local version. Otherwise, it'll list the dependencies of the latest version available on the server.Lists dependencies of a code resource named programName.py. If the resource is present locally, this will list the dependencies of the local version. Otherwise, it'll list the dependencies of the latest version available on the server.)")]
+        public string ResourceName { get; set; }
+
+        private static bool CheckStatus(List<string> actionArgs, bool successful)
         {
-            if (actionArgs.Count != 1)
+            if (actionArgs.Count == 1)
             {
                 Logger.logError($"dependencies action takes one argument: resource name. Usage:");
                 //logUsage();
                 successful = false;
-                return;
+                return successful;
             }
 
-            string resourceStr = actionArgs[0];
-            try
+            string resourceStr;
+            if (actionArgs.Count > 1)
             {
-                resourceIdentifier = ResourceIdentifier.generateResourceIdentifier(resourceStr);
+                resourceStr = actionArgs[1];
+                try
+                {
+                    resourceIdentifier = ResourceIdentifier.generateResourceIdentifier(resourceStr);
+                }
+                catch (ParseUtils.ArgumentProcessException ex)
+                {
+                    Logger.logError($"Error: {ex.Message}");
+                    successful = false;
+                    return successful;
+                }
             }
-            catch (ParseUtils.ArgumentProcessException ex)
-            {
-                Logger.logError($"Error: {ex.Message}");
-                successful = false;
-                return;
-            }
-
             successful = true;
+            return successful;
         }
 
 
-        public static int ListAllDependencies()
+        public static int ListAllDependencies(List<string> actionArgs)
         {
-            listDependencies(prefix: prefix, resourceIdentifier);
-            return 0;
+            int intStatus = 0;
+            if (CheckStatus(actionArgs.ToList(), false))
+            {
+                listDependencies(prefix: prefix, resourceIdentifier);
+                intStatus = 1;
+            }
+            return intStatus;
         }
         public static void listDependencies(string prefix, ResourceIdentifier resourceDescription)
         {

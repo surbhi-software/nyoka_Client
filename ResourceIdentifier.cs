@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using nyoka_Client;
 using static nyoka_Client.Constants;
 using static nyoka_Client.ParseUtils;
@@ -34,13 +36,16 @@ namespace nyoka_Client
             {
                 version = null; // redundant?
                 resourceNameStr = splitByAt[0];
+                //Console.WriteLine(resourceNameStr +"Surbhi");
             }
             // If there is one @ symbol in the string to separate name from version
             else if (splitByAt.Length == 2)
             {
                 version = splitByAt[1];
                 resourceNameStr = splitByAt[0];
+                //Console.WriteLine(version );Console.WriteLine(resourceNameStr );
             }
+            
             // If there is more than one @ symbol in the string
             else
             {
@@ -48,6 +53,7 @@ namespace nyoka_Client
                     $"Could not process \"{resourceStr}\": Only one @ symbol is permitted in a resource name"
                 );
             }
+            
 
             string resourceName = removeFolderPrefixIfPresent(resourceNameStr);
 
@@ -57,6 +63,7 @@ namespace nyoka_Client
             {
                 // validate version string
                 validateVersionString(resourceStr, version);
+
             }
             
             validateFileName(resourceName);
@@ -68,6 +75,7 @@ namespace nyoka_Client
             if (resourceNameStr.Split("/").Length > 1)
             {
                 int indexOfLastSlash = resourceNameStr.LastIndexOf('/');
+                //Console.WriteLine(resourceNameStr.Substring(indexOfLastSlash + 1));
                 return resourceNameStr.Substring(indexOfLastSlash + 1);
             }
             else
@@ -89,9 +97,13 @@ namespace nyoka_Client
    
     private static ResourceType inferResourceTypeFromResourceName(string resourceName)
         {
+            //Console.WriteLine(FileTypeInference.isDataFileName(resourceName));
             try{
                 if (FileTypeInference.isCodeFileName(resourceName)) return ResourceType.Code;
-                if (FileTypeInference.isDataFileName(resourceName)) return ResourceType.Data;
+                if (FileTypeInference.isDataFileName(resourceName)) 
+                {
+                    return ResourceType.Data;
+                }
                 if (FileTypeInference.isModelFileName(resourceName)) return ResourceType.Model;
                 throw new System.Exception();
             }
@@ -136,7 +148,23 @@ namespace nyoka_Client
             }
         }
 
-   
+   public static StreamWriter createOrOverwriteResourceVersionFile(ResourceType resourceType, string resourceName)
+        {
+            try
+            {
+                string filePath = Path.Join(resourceDirPath(resourceType), nyokaFolderName, resourceName + nyokaVersionExtension);
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+
+                return File.CreateText(filePath);
+            }
+            catch (System.Exception)
+            {
+                throw new Exception($"Failed to create metadata file for {resourceType.ToString().ToLower()} resource {resourceName}");
+            }
+        }
     }
 
 }

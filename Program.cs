@@ -18,7 +18,7 @@ namespace nyoka_Client
             Parser parser = new Parser(settings =>
             {
                 settings.CaseSensitive = false;
-                settings.IgnoreUnknownArguments = false;
+                // settings.IgnoreUnknownArguments = false;
             });
             PrintTable table = new PrintTable {
                     {Constants.HeaderStringType, 6},
@@ -33,15 +33,16 @@ namespace nyoka_Client
                 return 0;
             }
 
-            return CommandLine.Parser.Default.ParseArguments<InitOptions, ListOptions, AvailableOptions,
-             DependencyOption, PublishOptions>(args.ToList())
+            return CommandLine.Parser.Default.ParseArguments<InitOptions, AddOptions, ListOptions, AvailableOptions,
+             DependencyOption, PublishOptions, RemoveOptions>(args.ToList())
               .MapResult(
                 (InitOptions opts) => InitOptions.initDirectories(),
+                (AddOptions opts) => AddOptions.AddPackage(args.ToList()),
                 (ListOptions opts) => ListOptions.ListResources(opts.resourceType, args.ToList()),
                 (AvailableOptions opts) => AvailableOptions.Available(),
-                 (DependencyOption opts) => DependencyOption.ListAllDependencies(),
-                (PublishOptions opts) => PublishOptions.Publish(opts.prefix, opts.resourceDescription,
-                opts.deps),
+                 (DependencyOption opts) => DependencyOption.ListAllDependencies(args.ToList()),
+                (PublishOptions opts) => PublishOptions.Publish(args.ToList()),
+                (RemoveOptions opts) => RemoveOptions.RemovePackage(args.ToList()),
                 errs => 1);
         }
     }

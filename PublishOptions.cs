@@ -13,15 +13,73 @@ namespace nyoka_Client
 
     public class PublishOptions
     {
-        public string prefix { get; set; }
-        public ResourceIdentifier resourceDescription { get; set; }
-        public IEnumerable<ResourceIdentifier> deps { get; set; }
+        public static string prefix { get; set; }
+        public static ResourceIdentifier resourceIdentifier { get; set; }
+        public static List<ResourceIdentifier> deps = new List<ResourceIdentifier>();
+        public static void CheckArguments(List<string> actionArgs, bool successful)
+        {
+            string resourceStr;
+            if (actionArgs.Count <= 1)
+            {
+                Logger.logError($"publish action takes one required argument, resource name, with an option --deps to add dependencies. Usage:");
+                // logUsage();
+                successful = false;
+                return;
+            }
+            prefix = "-r";
+            //if(actionArgs)
+            resourceStr = actionArgs[1];
+
+            try
+            {
+                resourceIdentifier = ResourceIdentifier.generateResourceIdentifier(resourceStr);
+            }
+            catch (ParseUtils.ArgumentProcessException ex)
+            {
+                // Console.WriteLine(ex.Message+"Surbhi");
+                Logger.logError($"Error: {ex.Message}");
+                successful = false;
+                return;
+            }
+
+            if (actionArgs.Count > 2)
+            {
+                string shouldBeDepsOption = actionArgs[1];
+                Console.WriteLine(actionArgs[0] + actionArgs[1]);
+                Console.WriteLine(shouldBeDepsOption);
+                if (shouldBeDepsOption != "--deps")
+                {
+                    Logger.logError($"Error: publish has one possible option, --deps. Usage:");
+                    // logUsage();
+                    successful = false;
+                    return;
+                }
+
+                IEnumerable<string> depStrings = actionArgs.Skip(2);
+
+                foreach (string depString in depStrings)
+                {
+                    try
+                    {
+                        deps.Add(ResourceIdentifier.generateResourceIdentifier(depString));
+                    }
+                    catch (ParseUtils.ArgumentProcessException ex)
+                    {
+                        Logger.logError($"Error: {ex.Message}");
+                        successful = false;
+                        return;
+                    }
+                }
+            }
+
+            successful = true;
+        }
         public static void publishResource(string prefix, ResourceIdentifier resourceDescription, IEnumerable<ResourceIdentifier> deps)
         {
             try
             {
                 PublishDepsInfoContainer publishDepsInfo = new PublishDepsInfoContainer();
-
+                //Console.WriteLine(deps);
                 foreach (ResourceIdentifier depDescription in deps)
                 {
                     if (depDescription.version == null)
@@ -129,11 +187,18 @@ namespace nyoka_Client
             }
 
         }
-        public static int Publish(string prefix, ResourceIdentifier resourceDescription, IEnumerable<ResourceIdentifier> deps)
+
+        public static int Publish(List<string> actionArgs)
         {
-            Console.WriteLine(prefix);
-            publishResource(prefix, resourceDescription, deps);
-            return 1;
+            CheckArguments(actionArgs, true);
+            if (actionArgs.Count > 1)
+            {
+                publishResource(prefix: prefix, resourceDescription: resourceIdentifier, deps: deps);
+                return 1;
+            }
+            else
+
+                return 0;
         }
     }
 }

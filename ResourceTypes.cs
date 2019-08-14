@@ -165,7 +165,28 @@ namespace nyoka_Client
             }
         }
 
+  public static void removeResourceFilesIfPresent(ResourceType resourceType, string resourceName)
+        {
+            try
+            {
+                string resourceFilePath = Path.Join(resourceDirPath(resourceType), resourceName);
+                string resourceVersionFilePath = Path.Join(resourceDirPath(resourceType), nyokaFolderName, resourceName + nyokaVersionExtension);
 
+                if (File.Exists(resourceFilePath))
+                {
+                    File.Delete(resourceFilePath);
+                }
+
+                if (File.Exists(resourceVersionFilePath))
+                {
+                    File.Delete(resourceVersionFilePath);
+                }
+            }
+            catch (System.Exception)
+            {
+                throw new Exception($"Failed to remove {resourceType.ToString().ToLower()} resource {resourceName}");
+            }
+        }
 
     }
 }
